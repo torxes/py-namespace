@@ -60,3 +60,4 @@ YAML support
 >>> ns.name = 'value'
 >>> ns.write_yaml('data.yml')
 ```
+
