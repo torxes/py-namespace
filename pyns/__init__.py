@@ -23,8 +23,11 @@ class Namespace(object):
     Generic dict like container that allows access via attribute
     access and supported nested containers.
     """
+    builtin_attrs = frozenset((
+        '_Namespace__data', '_Namespace__default', '_Namespace__key_sep'
+    ))
 
-    def __init__(self, data=None, default=NoDefaultType()):
+    def __init__(self, data=None, default=NoDefaultType(), key_sep='.'):
         """
         @param data: Dictionary-like object to initialize namespace
         @param default: Default value to be returned if looked up name is not
@@ -40,9 +43,14 @@ class Namespace(object):
 
         self.__data = {}
         self.__default = default
+        self.__key_sep = key_sep
 
         if isinstance(data, six.string_types) and is_yaml_file(data):
             self.load_yaml(data)
+        elif isinstance(data, Namespace):
+            self.__data = getattr(data, '_Namespace__data')
+            self.__default = getattr(data, '_Namespace__default')
+            self.__key_sep = getattr(data, '_Namespace__key_sep')
         elif data:
             for key, value in six.iteritems(data):
                 self[key] = value
@@ -64,10 +72,7 @@ class Namespace(object):
 
     def __getattr__(self, name):
         try:
-            if name in ['_Namespace__data', '_Namespace__default']:
-                return self.__dict__[name]
-            else:
-               return self.__getvalue(name)
+            return self.__getvalue(name)
         except KeyError:
             msg = "'%s' object hast no attribute '%s'" % \
                     (self.__class__.__name__, name)
@@ -82,10 +87,17 @@ class Namespace(object):
             return value
 
     def __setattr__(self, name, value):
-        if name in ['_Namespace__data', '_Namespace__default']:
+        if name in Namespace.builtin_attrs:
             self.__dict__[name] = value
         else:
-            self.__data[name] = self.__make_nested(value)
+            key_parts = name.split(self.__key_sep)
+            tmp_ns = self.__data
+            while len(key_parts) > 1:
+                p = key_parts.pop(0)
+                if not p in tmp_ns:
+                    tmp_ns[p] = Namespace(default=self.__default, key_sep=self.__key_sep)
+                tmp_ns = tmp_ns[p]
+            tmp_ns[key_parts[0]] = self.__make_nested(value)
 
     __getitem__ = __getattr__
     __setitem__ = __setattr__
@@ -110,13 +122,16 @@ class Namespace(object):
         return '%s(%s)' % (cls_name, json.dumps(self.__data, cls=JSONEncoder))
 
     def __reduce__(self):
-        return (self.__class__, (self.raw_dict, self.__default))
+        return (self.__class__, (self.raw_dict, self.__default, self.__key_sep))
 
     def keys(self):
         return self.__data.keys()
 
     def values(self):
         return self.__data.values()
+
+    def items(self):
+        return self.__data.items()
 
     @property
     def raw_dict(self):
