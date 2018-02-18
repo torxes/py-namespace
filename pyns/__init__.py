@@ -26,7 +26,11 @@ class Namespace(object):
 
     def __init__(self, data=None, default=NoDefaultType()):
         """
-        @param data: Dictionary-like object to initialize namespace
+        @param data: Dictionary-like object to initialize namespace. If data is
+                     a string and ends in either '.yml' or '.yaml' it is
+                     regarded as file name and `Namespace` will try to load
+                     the data from the file.
+
         @param default: Default value to be returned if looked up name is not
                         found (either by item or by attribute access). Default
                         is the special marker `NoDefault` which causes an
