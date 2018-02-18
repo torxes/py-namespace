@@ -1,9 +1,10 @@
 from setuptools import setup
 
+
 if __name__ == '__main__':
     setup(
         name="pyns",
-        version="0.0.1.dev1",
+        version="0.0.1.dev2",
         url="https://github.com/torxes/py-namespace",
         author="Urs Klingsporn",
         author_email="urs.klingsporn@googlemail.com",
