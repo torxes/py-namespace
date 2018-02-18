@@ -167,6 +167,20 @@ key3:
     assert fileobj.getvalue().strip() == expected
 
 
+def test_raw_yaml_returns_yaml_string(nested_data):
+    expected = '''\
+key1: value1
+key2:
+  key2_1: value2_1
+key3:
+- key3_1: value3_1
+'''
+
+    ns = Namespace(nested_data)
+
+    assert ns.raw_yaml == expected
+
+
 def test_write_and_load_yaml_results_same_data(tmpdir):
     src = Namespace(nested_data_dict)
     dest = Namespace()
@@ -327,3 +341,30 @@ def test_init_namespace_from_other_transfers_default_and_keysep():
     assert ns._Namespace__default == 42
     assert ns._Namespace__key_sep == '@'
     assert ns.raw_dict == dct
+
+
+def test_update_sets_values_from_other_namespace():
+    ns = Namespace({'base': 1})
+    other = Namespace({'key': 2})
+
+    ns.update(other)
+
+    assert ns.base == 1
+    assert ns.key == 2
+
+
+def test_update_with_nested_sets_values_recursively():
+    ns = Namespace({'key': {'nested': 0, 'other': 1}})
+    other = Namespace({'key': { 'nested': 'value'}})
+
+    ns.update(other)
+
+    assert ns.key.nested == 'value'
+    assert ns.key.other == 1
+
+
+def test_update_requires_namespace():
+    ns = Namespace()
+
+    with pytest.raises(ValueError):
+        ns.update('42')

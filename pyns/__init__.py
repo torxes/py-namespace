@@ -197,3 +197,17 @@ class Namespace(object):
         for key in obj:
             data[key] = self.__make_nested(obj[key])
         self.__data = data
+
+    def update(self, other):
+        if not isinstance(other, Namespace):
+            raise ValueError('update requires Namespace')
+
+        for key, value in other.items():
+            if isinstance(value, Namespace):
+                u = self.get(key, default=Namespace())
+                u.update(value)
+                self[key] = u
+            else:
+                self[key] = value
+
+
