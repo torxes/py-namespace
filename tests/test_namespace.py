@@ -278,3 +278,52 @@ def test_namespace_is_pickleable(nested_data):
     pns = pickle.loads(pickle.dumps(ns))
 
     assert pns.raw_dict == ns.raw_dict
+
+
+def test_non_existent_keys_with_separator_leads_to_new_nested_value():
+    ns = Namespace(key_sep='.')
+
+    ns['foo.bar'] = 'value'
+
+    assert ns.foo.bar == 'value'
+
+
+def test_existent_keys_with_separator_updates_nested_value():
+    ns = Namespace({'foo': {'bar': 'oldvalue' }}, key_sep='.')
+
+    ns['foo.bar'] = 'value'
+
+    assert ns.foo.bar == 'value'
+
+
+def test_keys():
+    dct = {'key1': 0, 'key2': 1}
+    ns = Namespace(dct)
+
+    assert sorted(ns.keys()) == sorted(dct.keys())
+
+
+def test_values():
+    dct = {'key1': 0, 'key2': 1}
+    ns = Namespace(dct)
+
+    assert sorted(ns.values()) == sorted(dct.values())
+
+
+def test_items():
+    dct = {'key1': 0, 'key2': 1}
+    ns = Namespace(dct)
+
+    for key, value in ns.items():
+        assert dct[key] == value
+
+
+def test_init_namespace_from_other_transfers_default_and_keysep():
+    dct = {'key1': 0, 'key2': 1}
+    other = Namespace(dct, default=42, key_sep='@')
+
+    ns = Namespace(other)
+
+    assert ns._Namespace__default == 42
+    assert ns._Namespace__key_sep == '@'
+    assert ns.raw_dict == dct
